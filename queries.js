@@ -9,7 +9,7 @@ const pool = new Pool({
 
 //GET TASKS
 const getTasks = (request, response) => {
-  pool.query(`SELECT * FROM KANBAN ORDER BY id ASC`, (error, result) => {
+  pool.query(`SELECT * FROM TASKS ORDER BY id ASC`, (error, result) => {
     if (error) {
       throw error;
     }
@@ -19,10 +19,11 @@ const getTasks = (request, response) => {
 
 //CREATE TASK
 const createTask = (request, response) => {
-  const { task, due, priority, status } = request.body;
+  const { task, status, owner } = request.body.data;
+  console.log(request.body.data);
   pool.query(
-    `INSERT INTO KANBAN (task,due,priority,status) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [task, due, priority, status],
+    `INSERT INTO TASKS (task,  status, owner) VALUES ($1, $2, $3) RETURNING id`,
+    [task, status, owner],
     (error, result) => {
       if (error) {
         throw error;
@@ -34,8 +35,11 @@ const createTask = (request, response) => {
 
 //DELETE TASK
 const deleteTask = (request, response) => {
+  const { id } = request.body;
+  console.log(id + ": deleted");
   pool.query(
-    `DELETE FROM KANBAN WHERE id = ${request.body.id} RETURNING id`,
+    `DELETE FROM TASKS WHERE id = $1 RETURNING id`,
+    [id],
     (error, result) => {
       if (error) {
         throw error;
@@ -47,9 +51,10 @@ const deleteTask = (request, response) => {
 
 //UPDATE TASK
 const updateTask = (request, response) => {
-  const { id, task } = request.body;
+  const { id, task } = request.body.data;
+  console.log(id + ": " + task)
   pool.query(
-    `UPDATE KANBAN SET task = $2 WHERE id = $1 `,
+    `UPDATE TASKS SET task = $2 WHERE id = $1`,
     [id, task],
     (error, result) => {
       if (error) {
@@ -60,47 +65,46 @@ const updateTask = (request, response) => {
   );
 };
 
-//UPDATE DUE
-const updateDue = (request, response) => {
-  const { id, due } = request.body;
-  pool.query(
-    `UPDATE KANBAN SET due = $2 WHERE id = $1 `,
-    [id, due],
-    (error, result) => {
-      if (error) {
-        throw error;
-      }
-      response.status(200).send(`Task due modified with ID: ${id}`);
-    }
-  );
-};
-
-//UPDATE PRIORITY
-const updatePriority = (request, response) => {
-  const { id, priority } = request.body;
-  pool.query(
-    `UPDATE KANBAN SET priority = $2 WHERE id = $1 `,
-    [id, priority],
-    (error, result) => {
-      if (error) {
-        throw error;
-      }
-      response.status(200).send(`Task priority modified with ID: ${id}`);
-    }
-  );
-};
-
 //UPDATE STATUS
 const updateStatus = (request, response) => {
-  const { id, status } = request.body;
+  const { id, status } = request.body.data;
+  console.log(id + ": " + status)
   pool.query(
-    `UPDATE KANBAN SET status = $2 WHERE id = $1 `,
+    `UPDATE TASKS SET status = $2 WHERE id = $1`,
     [id, status],
     (error, result) => {
       if (error) {
         throw error;
       }
-      response.status(200).send(`Task status modified with ID: ${id}`);
+      response.status(200).send(`Task text modified with ID: ${id}`);
+    }
+  );
+};
+
+//GET USER
+const getUser = (request, response) => {
+  const userName = parseInt(request.params.userName);
+
+  pool.query("SELECT * FROM USERS WHERE USER = $1", [userName], (error, results) => {
+    if (error) {
+      throw error;
+    }
+    response.status(200).json(results.rows);
+  });
+};
+
+//CREATE USER
+const createUser = (request, response) => {
+  const { userName, pass } = request.body.data;
+  console.log(request.body.data);
+  pool.query(
+    `INSERT INTO USERS (USER,  PASS) VALUES ($1, $2) RETURNING id`,
+    [userName, pass],
+    (error, result) => {
+      if (error) {
+        throw error;
+      }
+      response.status(201).send(`User added with ID: ${result.rows[0].id}`);
     }
   );
 };
@@ -110,7 +114,8 @@ module.exports = {
   createTask,
   deleteTask,
   updateTask,
-  updateDue,
-  updatePriority,
   updateStatus,
+  getUser,
+  createUser,
+  //loginUser
 };
