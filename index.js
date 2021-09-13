@@ -3,6 +3,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const db = require("./queries");
 const app = express();
+const hostname = '0.0.0.0';
 const port = 3002;
 
 app.use(cors());
@@ -18,6 +19,6 @@ app.post("/user", db.getUser);
 app.post("/user/create", db.createUser);
 app.post("/user/login", db.login);
 
-app.listen(port, () => {
+app.listen(port, hostname, () => {
   console.log(`Server running on port http://localhost:${port}.`);
 });
